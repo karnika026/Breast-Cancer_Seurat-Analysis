@@ -6,12 +6,12 @@ library(Matrix)
 library(patchwork)
 library(readr)
 library(tidyverse)
-setwd("C:/Users/kas2071/Desktop/Github project/GSE161529_RAW_NORMAL")
-features_file <- "C:/Users/kas2071/Desktop/Github project/GSE161529_RAW_NORMAL/features.tsv"
+setwd("....../Github project/GSE161529_RAW_NORMAL")
+
+#Loading data
+features_file <- "......./Github project/GSE161529_RAW_NORMAL/features.tsv"
 matrix_files  <- list.files(pattern = "matrix\\.mtx\\.gz$", full.names = TRUE)
 barcode_files <- list.files(pattern = "barcodes\\.tsv\\.gz$", full.names = TRUE)
-
-
 matrix_files <- sort(matrix_files)
 barcode_files <- sort(barcode_files)
 length(matrix_files)
@@ -26,29 +26,28 @@ features <- read.delim(gzfile(features_file),
 gene_names <- make.unique(features$V2)
 
 for (i in seq_along(matrix_files)) {
-
   mat <- readMM(gzfile(matrix_files[i]))
-  barcodes <- read.delim(gzfile(barcode_files[i]),  # NOTE: features.tsv contains duplicated gene symbols.# Seurat requires unique rownames, so we use make.unique().
-                         header = FALSE,
+  barcodes <- read.delim(gzfile(barcode_files[i]), header = FALSE,
                          stringsAsFactors = FALSE)
-
   rownames(mat) <- gene_names
   colnames(mat) <- barcodes$V1
+sample_name <- sub("-matrix.*", "", basename(matrix_files[i]))
 
- sample_name <- sub("-matrix.*", "", basename(matrix_files[i]))
-
-  seurat_obj <- CreateSeuratObject(
+#Creating Seurat Object
+seurat_obj <- CreateSeuratObject(
     counts = mat,
     project = sample_name,
     min.cells = 3,
     min.features = 200
   )
-
   seurat_obj$sample <- sample_name
   seurat_list[[sample_name]] <- seurat_obj
 }
 
 length(seurat_list)
+
+
+#Merging Seurat Object
 seurat_merged <- merge(
   seurat_list[[1]],
   y = seurat_list[-1],
@@ -56,7 +55,9 @@ seurat_merged <- merge(
   project = "GSE161529"
 )
 class(seurat_merged)
-seurat_merged
+
+
+#Quality control 
 seurat_merged[["percent.mt"]] <- PercentageFeatureSet(seurat_merged, pattern = "^MT-")
 seurat_merged[["percent.ribo"]] <- PercentageFeatureSet(seurat_merged,pattern = "^RP[SL]")
 plots <- VlnPlot(
@@ -75,7 +76,7 @@ print(plots[[3]])
 ggsave(
   filename = "percent.mt.png",
   plot = plots[[3]],
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "...../Github project/PLOTS",
   width = 15,
   height = 10,
   dpi = 300
@@ -86,25 +87,29 @@ plot = plot1 + plot2
 print(plot1)
 ggsave(filename = "plot1.png",
   plot = plot1,
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "......./Github project/PLOTS",
   width = 15,
   height = 10,
   dpi = 300
 )
 ggsave(filename = "plot2.png",
   plot = plot2,
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "....../Github project/PLOTS",
   width = 15,
   height = 10,
   dpi = 300
 )
 ggsave(filename = "plot.png",
   plot = plot,
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "....../Github project/PLOTS",
   width = 20,
   height = 10,
   dpi = 300
 )
+
+
+# Quality Control and Filtering
+
 seurat_merged_qc <- subset(
   seurat_merged,
   subset =
@@ -129,12 +134,13 @@ Variableplot = Variablefeaturesplot + labelpointplot
 print(Variableplot)
 ggsave(filename = "Variableplot.png",
   plot = Variableplot,
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "....../Github project/PLOTS",
   width = 20,
   height = 10,
   dpi = 300
 )
 
+#Scaling Data
 seurat_merged_qc <- ScaleData(seurat_merged_qc,features = VariableFeatures(seurat_merged_qc))
 str(seurat_merged_qc)
 class(seurat_merged_qc)
@@ -147,7 +153,7 @@ seurat_merged_qc <- RunPCA(seurat_merged_qc, features = VariableFeatures(object 
 Vizdimplot <-VizDimLoadings(seurat_merged_qc, dims = 1:2, reduction = "pca")
 ggsave(filename = "Vizdimplot.png",
   plot = Vizdimplot,
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "......./Github project/PLOTS",
   width = 20,
   height = 10,
   dpi = 300
@@ -155,31 +161,34 @@ ggsave(filename = "Vizdimplot.png",
 dimplot <- DimPlot(seurat_merged_qc, reduction = "pca", raster = FALSE) + NoLegend()
 ggsave(filename = "dimplot.png",
   plot = dimplot,
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "......./Github project/PLOTS",
   width = 20,
   height = 10,
   dpi = 300
 )
 heatmap <- DimHeatmap(seurat_merged_qc, dims = 1:15, cells = 500, balanced = TRUE)
-pdf(
-  file = "C:/Users/kas2071/Desktop/Github project/PLOTS/heatmap.pdf",
-  width = 12,
-  height = 8
-)
+pdf(file = "......../Github project/PLOTS/heatmap.pdf",width = 12,height = 8)
 dev.off()
+
 #Dimensional heatmaps were saved using base R graphics devices due to ComplexHeatmap-based rendering in Seurat.
 
+
+#Elbow Plot
 elbowplot <- ElbowPlot(seurat_merged_qc)
 ggsave(filename = "elbowplot.png",
   plot = elbowplot,
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "......./Github project/PLOTS",
   width = 20,
   height = 10,
   dpi = 300
 )
+
+#Clustering the cells
 seurat_merged_qc <- FindNeighbors(seurat_merged_qc, dims = 1:15)
 seurat_merged_qc <- FindClusters(seurat_merged_qc, resolution = 0.5)
 head(Idents(seurat_merged_qc), 5)
+
+#Running UMAP
 seurat_merged_qc <- RunUMAP(seurat_merged_qc, dims = 1:15)
 umap_plot <- DimPlot(
   seurat_merged_qc,
@@ -190,21 +199,15 @@ umap_plot <- DimPlot(
 )
 ggsave(filename = "umap_plot.png",
   plot = umap_plot,
-  path = "C:/Users/kas2071/Desktop/Github project/PLOTS",
+  path = "......../Github project/PLOTS",
   width = 20,
   height = 10,
   dpi = 300
 )
 
-saveRDS(
-  seurat_merged_qc,
-  file = "C:/Users/kas2071/Desktop/Github project/seurat_merged_qc.rds"
-)
-seurat_merged_qc <- readRDS(
-  "C:/Users/kas2071/Desktop/Github project/seurat_merged_qc.rds"
-)
-class(seurat_merged_qc)
-Idents(seurat_merged_qc)
+saveRDS(seurat_merged_qc,file = "........./Github project/seurat_merged_qc.rds")
+
+#FindMarkers function 
 seurat_merged_qc <- JoinLayers(seurat_merged_qc)
 seurat_markers <- FindAllMarkers(
   seurat_merged_qc,
@@ -213,13 +216,13 @@ seurat_markers <- FindAllMarkers(
   logfc.threshold = 0.25
 )
 
-DefaultAssay(seurat_merged_qc)
-Assays(seurat_merged_qc)
 class(seurat_markers)
 colnames(seurat_markers)
 head(seurat_markers)
 tail(seurat_markers)
-saveRDS(
-  seurat_markers,
-  file = "C:/Users/kas2071/Desktop/Github project/seurat_markers.rds"
-)
+saveRDS(seurat_markers,file = "......../Github project/seurat_markers.rds")
+
+# Marker identification will be added in the next commit
+# TO DO: Identify top markers genes per cluster
+
+
