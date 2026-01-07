@@ -57,7 +57,7 @@ seurat_merged <- merge(
 class(seurat_merged)
 
 
-#Quality control 
+#Quality control and Filtering
 seurat_merged[["percent.mt"]] <- PercentageFeatureSet(seurat_merged, pattern = "^MT-")
 seurat_merged[["percent.ribo"]] <- PercentageFeatureSet(seurat_merged,pattern = "^RP[SL]")
 plots <- VlnPlot(
@@ -106,10 +106,6 @@ ggsave(filename = "plot.png",
   height = 10,
   dpi = 300
 )
-
-
-# Quality Control and Filtering
-
 seurat_merged_qc <- subset(
   seurat_merged,
   subset =
@@ -121,13 +117,17 @@ seurat_merged_qc <- subset(
 dim(seurat_merged)
 dim(seurat_merged_qc)
 
+
+#Normalization
 seurat_merged_qc <- NormalizeData(seurat_merged_qc)
+
+#Identification of highly variable features
 seurat_merged_qc <- FindVariableFeatures(seurat_merged_qc, selection.method = "vst", nfeatures = 2000)
 
 # Identify the 10 most highly variable genes
 top10 <- head(VariableFeatures(seurat_merged_qc), 10)
 
-# plot variable features with and without labels
+# plot variable features with labels
 Variablefeaturesplot <- VariableFeaturePlot(seurat_merged_qc)
 labelpointplot <- LabelPoints(plot = Variablefeaturesplot, points = top10, repel = TRUE, xnudge = 0, ynudge = 0)
 Variableplot = Variablefeaturesplot + labelpointplot
@@ -166,6 +166,7 @@ ggsave(filename = "dimplot.png",
   height = 10,
   dpi = 300
 )
+
 heatmap <- DimHeatmap(seurat_merged_qc, dims = 1:15, cells = 500, balanced = TRUE)
 pdf(file = "......../Github project/PLOTS/heatmap.pdf",width = 12,height = 8)
 dev.off()
@@ -224,5 +225,6 @@ saveRDS(seurat_markers,file = "......../Github project/seurat_markers.rds")
 
 # Marker identification will be added in the next commit
 # TO DO: Identify top markers genes per cluster
+
 
 
