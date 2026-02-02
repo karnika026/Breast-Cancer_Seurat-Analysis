@@ -62,7 +62,7 @@ umap_plot <- DimPlot(
 
 
 ggsave(
-  filename = "Annotated_Breast_UMAP.png",
+  filename = "annotated_breast_UMAP.png",
   plot = umap_plot,
   path = "C:....../Github project/PLOTS",
   width = 12,
