@@ -412,14 +412,7 @@ umap_plot <- DimPlot(
 )
 save_plot(umap_plot, "umap_clusters.png", width = 20, height = 10)
 
-# UMAP colored by sample
-umap_by_sample <- DimPlot(
-  seurat_merged_qc,
-  reduction = "umap",
-  group.by = "sample",
-  raster = FALSE
-)
-save_plot(umap_by_sample, "umap_by_sample.png", width = 20, height = 10)
+
 
 # ============================================================================
 # 11. SAVE PROCESSED OBJECT
@@ -458,6 +451,7 @@ message("Saved marker genes: ", markers_file)
 
 # Marker identification will be added in the next commit
 # TO DO: Identify top markers genes per cluster
+
 
 
 
